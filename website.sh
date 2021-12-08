@@ -9,10 +9,63 @@ check_connection()
         echo "No internet connection" 1>&2
         exit 64
     fi   
+} 
+
+main()
+{
+    local OPTIND opt i
+    while getopts ":h" opt; do
+        case $opt in
+        h) manual;exit;;
+        \?)menu;;
+        esac
+    done
+    menu
 }
+
+manual()
+{
+    
+    
+    
+    echo -e "$(basename "$0") [-h] -- program to create a blog-like website
+WHERE:
+    -h  show this help text
+
+HOW TO USE:
+    Launching this program will cause a menu with 6 options to appear:
+        1)Check Connection      4)Build Website
+        2)Check User            5)Write Message
+        3)Add User              6)Exit
+    The user will then input the number of the option they're interested in.
+
+WHAT EACH OPTION DOES:
+    1)Check Connection:
+        Checks if the user has access to an internet connection
+    2)Check User
+        User inputs username and password to check if the account already exists
+    3)Add User
+        User inputs username and password to register them
+    4)Build Website
+        Checks if required elements to create the website already exist 
+        and if not,creates them.
+        After having checked for all required elements the website will be built
+        and opened on Firefox only
+    5)Write Message
+        Launches option 4 to verify if account exists and if they do,
+        allows the user to input a message
+    6)Exit
+        Closes this program
+    "   
+
+}
+
+
+
 
 menu()
 {
+    
     PS3="Select an option: "
     select answer in "Check Connection" \
                     "Check User" \
@@ -38,6 +91,7 @@ menu()
                 add_message
                 ;;
             "Exit")
+                echo "Goodbye..."
                 exit 0
                 ;;
             *)
@@ -294,4 +348,4 @@ check_user()
     fi
 }
 
-menu
+main $@
