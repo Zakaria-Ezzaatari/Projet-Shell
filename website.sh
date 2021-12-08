@@ -15,6 +15,8 @@ menu()
 {
     PS3="Select an option: "
     select answer in "Check Connection" \
+                    "Check User" \
+                    "Add User" \
                     "Build Website" \
                     "Write Message" \
                     "Exit"
@@ -22,6 +24,12 @@ menu()
         case "$answer" in 
             "Check Connection")
                 check_connection
+                ;;
+            "Check User")
+                check_user
+                ;;
+            "Add User")
+                add_user
                 ;;
             "Build Website")
                 build
@@ -111,16 +119,20 @@ create_jsons()
         }' > messages.json
 
         touch accounts.json
-        echo -e '[
+        echo -e '{
+        "data":{
+            "identify":[
         {
             "user": "test",
             "password": "test test"
         },
         {
             "user": "lucas",
-            "password": "lucas*"
+            "password": "lucas"
         }
-        ]' > accounts.json
+        ]
+        }
+        }' > accounts.json
     fi
 
 }
@@ -212,6 +224,8 @@ for item in "${my_array[@]}"; do
     " >> websitetest.html
 done
 
+
+
 echo -e "
 </tbody>
 </table>
@@ -227,15 +241,57 @@ firefox ./websitetest.html
 add_message()
 {
     create_jsons
-    echo "Insert Username"
-    read varuser
+    check_user
+    
     echo "Insert Message"
     read varmessage
-    #jq '.[.[] | length] |= . + {"user": "'"$varuser"'", "message": "'"$varmessage"'"}' messages.json 
     jq ".data.forum[.data.forum| length] |= . + {\"user\": \"$varuser\", \"message\": \"$varmessage\"}" messages.json >> messages2.json
     rm messages.json
     mv messages2.json messages.json
 }
 
+add_user()
+{
+    create_jsons
+    echo "Insert Username"
+    read varuser
+    echo "Insert Password"
+    read varpassword
+    jq ".data.identify[.data.identify| length] |= . + {\"user\": \"$varuser\", \"password\": \"$varpassword\"}" accounts.json >> accounts2.json
+    rm accounts.json
+    mv accounts2.json accounts.json
+}
+
+check_user()
+{
+    create_jsons
+    verify=false
+    echo "Insert Username"
+    read varuser
+    echo "Insert Password"
+    read varpassword
+    readarray -t my_array < <(jq -c '.data.identify[]' accounts.json)
+
+    # iterate through the Bash array
+    for item in "${my_array[@]}"; do
+        user=$(jq '.user' <<< "$item")
+        password=$(jq '.password' <<< "$item")
+        
+        if [[ \"$varuser\" = $user && \"$varpassword\" = $password ]]; then
+            verify=true
+        fi
+    done
+
+    if [[ $verify == false ]]; then
+        echo "These informations do not corrispond to any registered account please sign up first" 1>&2
+        exit 64
+        
+    elif [[ $verify == true ]]; then
+        echo "User Registered"
+    else
+        echo "THIS IS NOT SUPPOSED TO HAPPEN" 1>&2
+        exit 64
+    fi
+}
 
 menu
