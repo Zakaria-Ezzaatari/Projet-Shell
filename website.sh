@@ -16,6 +16,7 @@ menu()
     PS3="Select an option: "
     select answer in "Check Connection" \
                     "Build Website" \
+                    "Write Message" \
                     "Exit"
     do
         case "$answer" in 
@@ -24,6 +25,9 @@ menu()
                 ;;
             "Build Website")
                 build
+                ;;
+            "Write Message")
+                add_message
                 ;;
             "Exit")
                 exit 0
@@ -87,6 +91,40 @@ load_images()
     </div>" >> websitetest.html
 }
 
+create_jsons()
+{
+    if [ ! -f "messages.json" ] || [ ! -f "accounts.json" ]; then
+        touch messages.json
+        echo -e '{
+        "data":{
+            "forum":[
+        {
+            "user": "test",
+            "message": "Sample Text.exe"
+        },
+        {
+            "user": "lucas",
+            "message": "lorem"
+        }
+        ]
+        }
+        }' > messages.json
+
+        touch accounts.json
+        echo -e '[
+        {
+            "user": "test",
+            "password": "test test"
+        },
+        {
+            "user": "lucas",
+            "password": "lucas*"
+        }
+        ]' > accounts.json
+    fi
+
+}
+
 
 
 build()
@@ -96,6 +134,7 @@ build()
     check_connection
     check_permission
     check_images
+    create_jsons
     echo > websitetest.html
     echo -e "<!doctype html>
     <html lang='en'>
@@ -145,17 +184,7 @@ build()
 #install required for handling JSON files efficiently
 #sudo apt-get install jq
 
-touch messages.json
-echo -e '[
-    {
-        "user": "test",
-        "message": "Sample Text.exe"
-    },
-    {
-        "user": "lucas",
-        "message": "lorem"
-    }
-    ]' > messages.json
+
 
 echo -e "
 <table class='table table-bordered'>
@@ -169,7 +198,7 @@ echo -e "
 " >> websitetest.html
 
 # read each item in the JSON array to an item in the Bash array
-readarray -t my_array < <(jq -c '.[]' messages.json)
+readarray -t my_array < <(jq -c '.data.forum[]' messages.json)
 
 # iterate through the Bash array
 for item in "${my_array[@]}"; do
@@ -190,8 +219,22 @@ echo -e "
 
 
 
+
 firefox ./websitetest.html
 
+}
+
+add_message()
+{
+    create_jsons
+    echo "Insert Username"
+    read varuser
+    echo "Insert Message"
+    read varmessage
+    #jq '.[.[] | length] |= . + {"user": "'"$varuser"'", "message": "'"$varmessage"'"}' messages.json 
+    jq ".data.forum[.data.forum| length] |= . + {\"user\": \"$varuser\", \"message\": \"$varmessage\"}" messages.json >> messages2.json
+    rm messages.json
+    mv messages2.json messages.json
 }
 
 
